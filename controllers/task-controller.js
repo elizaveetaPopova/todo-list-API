@@ -28,6 +28,14 @@ const deleteTask = (req, res) => {
     .catch(() => handleError(res, "Something goes wrong..."));
 };
 
+const deleteTasks = (req, res) => {
+  Task.deleteMany({_id: { $in: req.body}})
+    .then((result) => {
+      res.status(200).json(result);
+    })
+    .catch(() => handleError(res, "Something goes wrong..."));
+};
+
 const addTask = (req, res) => {
   const task = new Task(req.body);
   task
@@ -52,4 +60,5 @@ module.exports = {
   deleteTask,
   addTask,
   updateTask,
+  deleteTasks
 };
