@@ -39,7 +39,7 @@ const addTask = (req, res) => {
 };
 
 const updateTask = (req, res) => {
-  Task.findByIdAndUpdate(req.params.id, req.body)
+  Task.findByIdAndUpdate(req.params.id, req.body, { new: true })
     .then((result) => {
       res.status(200).json(result);
     })
