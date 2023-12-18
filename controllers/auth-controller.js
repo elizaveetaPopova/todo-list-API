@@ -56,6 +56,15 @@ const register = async (req, res) => {
       password: encryptedPassword,
     });
 
+    const token = jwt.sign(
+      { user_id: user._id, email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "2h",
+      }
+    );
+
+    user.token = token;
     res.status(200).json(user);
   } catch (error) {
     handleError(res, error);
