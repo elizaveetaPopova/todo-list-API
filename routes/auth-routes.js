@@ -1,7 +1,7 @@
 const express = require("express");
 const { check } = require("express-validator");
 
-const { login, register } = require("../controllers/auth-controller");
+const { login, register, refresh } = require("../controllers/auth-controller");
 
 const router = express.Router();
 
@@ -17,5 +17,6 @@ router.post(
 );
 
 router.post("/login", login);
+router.get("/refresh", refresh);
 
 module.exports = router;

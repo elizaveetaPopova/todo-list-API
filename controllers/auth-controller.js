@@ -1,8 +1,12 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 
-const User = require("../models/auth");
+const { User, Session } = require("../models/auth");
 const { validationResult } = require("express-validator");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../servises.js/Token");
+const { COOKIE_SETTINGS, ACCESS_TOKEN_EXPIRATION } = require("../constants");
 
 const handleError = (res, error) => {
   res.status(500).json({ error });
@@ -21,26 +25,23 @@ const login = async (req, res) => {
       return res.status(400).json({ message: `Password is not correct` });
     }
 
-    const token = jwt.sign(
-      { user_id: user._id, email },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "24h",
-      }
-    );
-    return res.status(200).json({ token });
+    const accessToken = await generateAccessToken(user._id, email);
+    const refreshToken = await generateRefreshToken(user._id, email);
+    res.cookie("refreshToken", refreshToken, COOKIE_SETTINGS.REFRESH_TOKEN);
+    return res.status(200).json({ accessToken });
   } catch (error) {
     handleError(res, error);
   }
 };
 
 const register = async (req, res) => {
+  console.log("req.body :>> ", req.body);
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: "Registration error", errors });
     }
-    const { first_name, last_name, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     const oldUser = await User.findOne({ email });
 
@@ -49,29 +50,38 @@ const register = async (req, res) => {
     }
 
     const encryptedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      first_name,
-      last_name,
+    const user = new User({
+      first_name: firstName,
+      last_name: lastName,
       email: email.toLowerCase(),
       password: encryptedPassword,
     });
 
-    const token = jwt.sign(
-      { user_id: user._id, email },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "2h",
-      }
-    );
+    user.save();
 
-    user.token = token;
-    res.status(200).json(user);
+    const accessToken = await generateAccessToken(user._id, email);
+    const refreshToken = await generateRefreshToken(user._id, email);
+    const accessTokenExpiration = ACCESS_TOKEN_EXPIRATION;
+    res.cookie("refreshToken", refreshToken, COOKIE_SETTINGS.REFRESH_TOKEN);
+
+    const session = new Session({
+      user_id: user._id,
+      refresh_token: refreshToken,
+    });
+    session.save();
+    return res.status(200).json({ accessToken, accessTokenExpiration });
   } catch (error) {
     handleError(res, error);
   }
 };
 
+const refresh = async (req, res) => {
+  try {
+  } catch (error) {}
+};
+
 module.exports = {
   login,
   register,
+  refresh,
 };

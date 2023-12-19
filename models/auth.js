@@ -10,5 +10,11 @@ const userSchema = new Schema({
   token: { type: String },
 });
 
+const sessionSchema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, default: null },
+  refresh_token: { type: String, default: null },
+});
+
 const User = mongoose.model("User", userSchema);
-module.exports = User;
+const Session = mongoose.model("Session", sessionSchema);
+module.exports = { User, Session };
